@@ -25,7 +25,7 @@ foreach(@h264files)
   `perl hexfilegen.pl input.264`;
   system("./a.out | grep \"OUT\" | awk \'{print \$2}\' >  out.hex");
   `perl dehex.pl out.hex out_hw.yuv`;
-  `./decoder/bin/ldecod.exe -i input.264 -o out_gold.yuv`;
+  `./decoder/bin/ldecod -i input.264 -o out_gold.yuv`;
   $out=`diff -q out_gold.yuv out_hw.yuv`;
   print $out;
   print "\n";

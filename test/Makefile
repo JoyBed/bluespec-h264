@@ -1,4 +1,6 @@
 
+TESTFILE ?= h254/720p50_parkrun_ter1-5.264
+
 all: out_hw.yuv out_gold.yuv
 	diff -q out_gold.yuv out_hw.yuv
 
@@ -12,7 +14,7 @@ a.out: build
 	bsc -sim -e mkTH ./build/*.ba
 
 input.264:
-	cp ./h264/x264foreman_qcif1-5.264 $@
+	cp $(TESTFILE) $@
 
 input.hex: input.264
 	./hexfilegen.pl input.264

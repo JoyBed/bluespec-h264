@@ -6,7 +6,7 @@
 $str = `ls`;
 print $str;
 # build the test executable.
-`make && bsc -sim -e mkTH *.ba`;
+`make release && bsc -sim -e mkTH *.ba`;
 
 # build the golden decoder
 `cd ./decoder/ldecod && make`;
@@ -16,8 +16,8 @@ print $str;
 foreach(@h264files)
 {
    chomp($_);
- 
-  print $_; 
+
+  print $_;
   print " ";
   `cp ./h264/$_  input.264`;
   system("wc input.264 | awk \'{printf(\"%08x\\n%08x\\n%08x\\n%08x\\n\", \$3, \$3, \$3, \$3)}\' > input_size.hex");
@@ -29,4 +29,3 @@ foreach(@h264files)
   print $out;
   print "\n";
 }
-

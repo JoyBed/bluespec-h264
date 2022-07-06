@@ -34,24 +34,24 @@ BSC_COMP = bsc
 #           -relax-method-earliness -relax-method-urgency -v
 
 VER_OPTS =  +RTS -K100000000 --RTS -u -v -verilog -aggressive-conditions
-SIM_OPTS =  +RTS -K100000000 --RTS -u -v -sim -aggressive-conditions -show-schedule 
+SIM_OPTS =  +RTS -K100000000 --RTS -u -v -sim -aggressive-conditions -show-schedule
 
-mainline : 
+mainline :
 	$(BSC_COMP) $(SIM_OPTS) -bdir ./ -p +:$(srcdir) -g $(toplevel_module) $(srcdir)/$(toplevel_module).bsv > out.log
 
-release : 
+release :
 	$(BSC_COMP) $(SIM_OPTS) -bdir ./ -p +:$(reldir)/ -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv> out.log\
 
-LCP : 
+LCP :
 	$(BSC_COMP) $(SIM_OPTS) -bdir ./ -p +:$(lcpdir):$(reldir)/ -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv> out.log\
 
-mainline_verilog : 
+mainline_verilog :
 	$(BSC_COMP) $(VER_OPTS) -bdir ./ -p +:$(srcdir) -g $(toplevel_module) $(srcdir)/$(toplevel_module).bsv > out.log
 
-release_verilog : 
+release_verilog :
 	$(BSC_COMP) $(VER_OPTS) -bdir ./ -p +:$(reldir)/ -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv> out.log\
 
-LCP_verilog : 
+LCP_verilog :
 	$(BSC_COMP) $(VER_OPTS) -bdir ./ -p +:$(lcpdir):$(reldir)/ -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv> out.log\
 
 
@@ -67,5 +67,4 @@ all : mainline
 #--------------------------------------------------------------------
 
 clean :
-	rm -rf $(junk) *~ \#* *.cxx *.ba *.o *.h *.bi *.bo *.bsv
- 
+	rm -rf $(junk) *~ \#* *.cxx *.ba *.o *.h *.bi *.bo *.bsv *.log

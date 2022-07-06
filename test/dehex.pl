@@ -1,5 +1,4 @@
-#!/usr/local/bin/perl
-
+#!/usr/bin/perl
 
 
 open(INF, $ARGV[0]) || die("\nCan't open $ARGV[0] for reading: $!\n");

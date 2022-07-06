@@ -7,8 +7,8 @@
 $str = `ls`;
 print $str;
 # build the test executable.
-`make && bsc -sim -e mkTH *.ba`;
-# `make release && bsc -sim -e mkTH *.ba`;
+# `make && bsc -sim -e mkTH *.ba`;
+`make release && bsc -sim -e mkTH *.ba`;
 
 # build the golden decoder
 `cd ./decoder/ldecod && make`;

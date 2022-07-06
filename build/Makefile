@@ -14,8 +14,8 @@ basedir  = ../
 
 # Library components
 
-bsvclibdir = $(MIT6375_HOME)/install/bsvclib
-bsvclibsrcs = \
+# bsvclibdir = $(MIT6375_HOME)/install/bsvclib
+# bsvclibsrcs = \
 
 # Bluespec sources
 

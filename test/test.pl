@@ -1,3 +1,4 @@
+#!/usr/bin/perl
 #fill this in at some point
 
 #build the code.
@@ -6,7 +7,8 @@
 $str = `ls`;
 print $str;
 # build the test executable.
-`make release && bsc -sim -e mkTH *.ba`;
+`make && bsc -sim -e mkTH *.ba`;
+# `make release && bsc -sim -e mkTH *.ba`;
 
 # build the golden decoder
 `cd ./decoder/ldecod && make`;
@@ -15,8 +17,7 @@ print $str;
 
 foreach(@h264files)
 {
-   chomp($_);
-
+  chomp($_);
   print $_;
   print " ";
   `cp ./h264/$_  input.264`;

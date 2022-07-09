@@ -34,34 +34,33 @@ BDIR ?= build
 # Default make target
 #--------------------------------------------------------------------
 
-# all : $(BDIR) mainline
-all : $(BDIR) release
+# all : mainline
+all : release
 
 $(BDIR):
 	mkdir -p $@
 
-mainline :
+mainline: $(BDIR)
 	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(srcdir) -g $(toplevel_module) $(srcdir)/$(toplevel_module).bsv > out.log
 
-release :
+release: $(BDIR)
 	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(reldir) -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv > out.log
 
-LCP :
+LCP: $(BDIR)
 	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(lcpdir):$(reldir) -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv > out.log
 
-mainline_verilog :
+mainline_verilog: $(BDIR)
 	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(srcdir) -g $(toplevel_module) $(srcdir)/$(toplevel_module).bsv > out.log
 
-release_verilog :
+release_verilog: $(BDIR)
 	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(reldir) -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv > out.log
 
-LCP_verilog :
+LCP_verilog: $(BDIR)
 	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(lcpdir):$(reldir) -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv > out.log
 
 
 #--------------------------------------------------------------------
 # Clean up
 #--------------------------------------------------------------------
-
-clean :
+clean:
 	rm -rf $(junk) *~ \#* *.cxx *.ba *.o *.h *.bi *.bo *.bsv *.log $(BDIR)

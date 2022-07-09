@@ -52,7 +52,9 @@ dependencies:
 
 clean:
 	@echo remove all objects
-	@rm -f $(OBJDIR)/*
+	@rm -rf $(OBJDIR)
+	@rm -rf $(BINDIR)
+	@rm -rf dependencies
 
 tags:
 	@echo update tag table

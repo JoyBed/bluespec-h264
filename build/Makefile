@@ -44,19 +44,19 @@ mainline :
 	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(srcdir) -g $(toplevel_module) $(srcdir)/$(toplevel_module).bsv > out.log
 
 release :
-	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(reldir) -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv> out.log\
+	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(reldir) -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv > out.log
 
 LCP :
-	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(lcpdir):$(reldir) -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv> out.log\
+	$(BSC_COMP) $(SIM_OPTS) -bdir $(BDIR) -p +:$(lcpdir):$(reldir) -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv > out.log
 
 mainline_verilog :
 	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(srcdir) -g $(toplevel_module) $(srcdir)/$(toplevel_module).bsv > out.log
 
 release_verilog :
-	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(reldir) -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv> out.log\
+	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(reldir) -g $(toplevel_module) $(reldir)/$(toplevel_module).bsv > out.log
 
 LCP_verilog :
-	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(lcpdir):$(reldir) -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv> out.log\
+	$(BSC_COMP) $(VER_OPTS) -bdir $(BDIR) -p +:$(lcpdir):$(reldir) -g $(toplevel_module) $(lcpdir)/$(toplevel_module).bsv > out.log
 
 
 #--------------------------------------------------------------------

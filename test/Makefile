@@ -1,8 +1,8 @@
 
-TESTFILE ?= h254/720p50_parkrun_ter1-5.264
+TESTFILE ?= h264/720p50_parkrun_ter1-5.264
 
 all: out_hw.yuv out_gold.yuv
-	diff -q out_gold.yuv out_hw.yuv
+	diff -s -q out_gold.yuv out_hw.yuv
 
 ./decoder/bin/ldecod:
 	cd ./decoder/ldecod && make
@@ -33,3 +33,4 @@ out_gold.yuv: input.264 ./decoder/bin/ldecod
 
 clean :
 	rm -rf *.cxx *.ba *.o *.h *.bi *.bo *.bsv *.log log.* input.264 *.hex ./decoder/bin/ldecod build ./a.out* out_* *.txt
+	cd ./decoder/ldecod && make clean

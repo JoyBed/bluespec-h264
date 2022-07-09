@@ -24,13 +24,13 @@
 import FIFO::*;
 
 interface SRAM#(type idx_type, type data_type);
- 
+
   method Action read_req(idx_type idx);
 
   method ActionValue#(data_type) read_resp();
 
   method Action	write(idx_type idx, data_type data);
-  
+
 
   method Bit#(18) address_out();
   method Bit#(32) data_out();
@@ -46,30 +46,30 @@ interface SRAM#(type idx_type, type data_type);
 endinterface
 
 
-module mkSRAM#(Integer low, Integer high) 
+module mkSRAM#(Integer low, Integer high)
   //interface:
               (SRAM#(idx_type, data_type))
   provisos
           (Bits#(idx_type, idx),
-           Bitwise#(idx_type), 
+           Bitwise#(idx_type),
 	   Bits#(data_type, data),
            Bitwise#(data_type),
            Literal#(data_type),
 	   Literal#(idx_type));
-	   
-  SRAM#(idx_type, data_type) m <- (valueof(data) == 0) ? 
+
+  SRAM#(idx_type, data_type) m <- (valueof(data) == 0) ?
                                    mkSRAM_Zero() :
 				   mkSRAM_NonZero(low, high);
 
   return m;
 endmodule
 
-import "BVI" SRAM = module mkSRAM_NonZero#(Integer low, Integer high) 
+import "BVI" SRAM = module mkSRAM_NonZero#(Integer low, Integer high)
   //interface:
               (SRAM#(idx_type, data_type))
   provisos
           (Bits#(idx_type, idx),
-           Bitwise#(idx_type), 
+           Bitwise#(idx_type),
 	   Bits#(data_type, data),
            Bitwise#(data_type),
            Literal#(data_type),
@@ -84,7 +84,7 @@ import "BVI" SRAM = module mkSRAM_NonZero#(Integer low, Integer high)
   parameter hi = high;
 
   method DOUT read_resp() ready(DOUT_RDY) enable(DOUT_EN);
-  
+
   method read_req(RD_ADDR) ready(RD_RDY) enable(RD_EN);
   method write(WR_ADDR, WR_VAL) enable(WR_EN);
 
@@ -103,19 +103,19 @@ import "BVI" SRAM = module mkSRAM_NonZero#(Integer low, Integer high)
   schedule read_req  CF read_resp;
   schedule read_resp CF (read_req, write);
   schedule write     CF read_resp;
-  schedule (read_req, write, read_resp) CF (address_out, data_out, data_in, data_tri, 
+  schedule (read_req, write, read_resp) CF (address_out, data_out, data_in, data_tri,
                                             we_bytes_out, we_out, ce_out, oe_out,
                                             cen_out, adv_ld_out);
-  schedule (address_out, data_out, data_in, data_tri, 
+  schedule (address_out, data_out, data_in, data_tri,
             we_bytes_out, we_out, ce_out, oe_out,
             cen_out, adv_ld_out)
-           CF 
-           (address_out, data_out, data_in, data_tri, 
+           CF
+           (address_out, data_out, data_in, data_tri,
             we_bytes_out, we_out, ce_out, oe_out,
             cen_out, adv_ld_out, read_req, write, read_resp);
 
-  //It may be dangerous not to have data_in conflict with itself.  
-  schedule data_in   C data_in;
+  //It may be dangerous not to have data_in conflict with itself.
+  // schedule data_in   C data_in;
   schedule read_req  C (read_req, write);
   schedule read_resp C read_resp;
   schedule write     C (write, read_req);
@@ -127,12 +127,12 @@ module mkSRAM_Zero
               (SRAM#(idx_type, data_type))
     provisos
           (Bits#(idx_type, idx),
-           Bitwise#(idx_type), 
+           Bitwise#(idx_type),
 	   Bits#(data_type, data),
            Bitwise#(data_type),
            Literal#(data_type),
 	   Literal#(idx_type));
-  
+
   FIFO#(data_type) q <- mkSizedFIFO(4);
 
   method Action read_req(idx_type i);
@@ -184,17 +184,17 @@ module mkSRAM_Zero
     return ~0;
   endmethod
 
-  method Bit#(1) adv_ld_out();  
+  method Bit#(1) adv_ld_out();
     return ~0;
   endmethod
 endmodule
 
-module mkSRAM_Full 
+module mkSRAM_Full
   //interface:
               (SRAM#(idx_type, data_type))
   provisos
           (Bits#(idx_type, idx),
-           Bitwise#(idx_type), 
+           Bitwise#(idx_type),
 	   Bits#(data_type, data),
            Bitwise#(data_type),
            Literal#(data_type),
@@ -205,4 +205,3 @@ module mkSRAM_Full
   return br;
 
 endmodule
-

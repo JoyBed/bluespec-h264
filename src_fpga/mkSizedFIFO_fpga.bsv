@@ -33,10 +33,10 @@ module mkSizedFIFO_fpga (IFPGA_FIFO#(f_type, size))
             Bits#(f_type, f_type_length),
             Add#(TLog#(size), 0, lg_size),
             Add#(TLog#(size), 1, lg_size_plus),
-            Add#(2, TLog#(size),lg_size_plus_plus), 
+            Add#(2, TLog#(size),lg_size_plus_plus),
             Add#(1, lg_size_plus, lg_size_plus_plus)
           );
-  
+
   RegFile#(Bit#(TLog#(size)), f_type) data <- mkRegFile(0, fromInteger(valueof(TSub#(size,1))));
   Reg#(Bit#(lg_size_plus)) number_enqueued <- mkReg(0);
   Reg#(Bit#(TLog#(size))) base_ptr <- mkReg(0);
@@ -61,32 +61,32 @@ module mkSizedFIFO_fpga (IFPGA_FIFO#(f_type, size))
            if(deque_pending.wget() matches tagged Valid .dp)
              begin
                // enque and deque occuring.. no change to net.
-               base_ptr <= (zeroExtend(base_ptr) == fromInteger(valueof(size)-1))? 0:base_ptr + 1;
-               Bit#(lg_size_plus_plus) offset = zeroExtend((zeroExtend(base_ptr) + number_enqueued)); 
+               base_ptr <= (base_ptr == fromInteger(valueof(size)-1))? 0:base_ptr + 1;
+               Bit#(lg_size_plus_plus) offset = zeroExtend((zeroExtend(base_ptr) + number_enqueued));
                data.upd((offset >= fromInteger(valueof(size)))?
-                           truncate(offset - truncate(fromInteger(valueof(size)))):
-                          truncate(offset),    
+                           truncate(offset - (fromInteger(valueof(size)))):
+                          truncate(offset),
                        new_data);
              end
            else
              begin
                number_enqueued <= number_enqueued + 1;
-               Bit#(lg_size_plus_plus) offset = zeroExtend((zeroExtend(base_ptr) + number_enqueued)); 
+               Bit#(lg_size_plus_plus) offset = zeroExtend((zeroExtend(base_ptr) + number_enqueued));
                data.upd((offset >= fromInteger(valueof(size)))?
-                           truncate(offset - truncate(fromInteger(valueof(size)))):
-                           truncate(offset),    
+                           truncate(offset - (fromInteger(valueof(size)))):
+                           truncate(offset),
                         new_data);
              end
-         end 
+         end
        else
          begin
            if(deque_pending.wget() matches tagged Valid .dp)
              begin
                //enque and deque occuring.. no change to net.
-               base_ptr <= (zeroExtend(base_ptr) == truncate(fromInteger(valueof(size)-1)))? 0:base_ptr + 1;
+               base_ptr <= (base_ptr == (fromInteger(valueof(size)-1)))? 0:base_ptr + 1;
                number_enqueued <= number_enqueued - 1;
              end
-         end 
+         end
       end
   endrule
 
@@ -98,11 +98,11 @@ module mkSizedFIFO_fpga (IFPGA_FIFO#(f_type, size))
 
     method Action deq()  if(number_enqueued > 0);
       deque_pending.wset(0);
-    endmethod 
+    endmethod
 
     method f_type first() if(number_enqueued > 0);
       return data.sub(base_ptr);
-    endmethod 
+    endmethod
 
     method Action clear();
       clear_pending.wset(0);

@@ -29,7 +29,7 @@ export mkFIFO2;
 import FIFOF::*;
 import RWire::*;
 import List::*;
-import Monad::*;
+// import Monad::*;
 
 interface FIFO_2 #(type t);
     method Bool has1i();
@@ -163,7 +163,7 @@ module mkFIFO2(FIFO_2#(t))
     action
       let enq1 = select(enq, ((Bit#(1))'(0)));
       enq1.wset(v);
-    endaction 
+    endaction
 
   endmethod: enq_1
 
@@ -289,4 +289,3 @@ module mkTest(FIFO_2#(Bit#(2)));
 endmodule: mkTest
 
 endpackage: FIFO_2
-

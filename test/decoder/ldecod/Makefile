@@ -26,7 +26,7 @@ CC=     $(shell which gcc)
 
 LIBS=   -lm
 CFLAGS= -std=gnu99 -pedantic -ffloat-store -fno-strict-aliasing
-FLAGS=  $(CFLAGS) -Wall -I$(INCDIR) -I$(ADDINCDIR) -D __USE_LARGEFILE64 -D _FILE_OFFSET_BITS=64 
+FLAGS=  $(CFLAGS) -Wall -I$(INCDIR) -I$(ADDINCDIR) -D __USE_LARGEFILE64 -D _FILE_OFFSET_BITS=64
 ifdef DBG
 SUFFIX= .dbg
 FLAGS+= -g
@@ -37,48 +37,48 @@ endif
 
 OBJSUF= .o$(SUFFIX)
 
-SRC=    $(wildcard $(SRCDIR)/*.c) 
+SRC=    $(wildcard $(SRCDIR)/*.c)
 ADDSRC= $(wildcard $(ADDSRCDIR)/*.c)
-OBJ=    $(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o$(SUFFIX)) $(ADDSRC:$(ADDSRCDIR)/%.c=$(OBJDIR)/%.o$(SUFFIX)) 
-BIN=    $(BINDIR)/$(NAME)$(SUFFIX).exe
+OBJ=    $(SRC:$(SRCDIR)/%.c=$(OBJDIR)/%.o$(SUFFIX)) $(ADDSRC:$(ADDSRCDIR)/%.c=$(OBJDIR)/%.o$(SUFFIX))
+BIN=    $(BINDIR)/$(NAME)$(SUFFIX)
 
+default: depend obj bin tags
 
-default: depend bin tags
+obj:
+	mkdir -p obj
 
 dependencies:
 	@echo "" >dependencies
 
 clean:
 	@echo remove all objects
-	@rm -f $(OBJDIR)/*
+	@rm -rf $(OBJDIR)
+	@rm -rf $(BINDIR)
+	@rm -rf dependencies
 
 tags:
 	@echo update tag table
 	@ctags inc/*.h src/*.c
 
-bin:    $(OBJ)
-	@echo
-	@echo 'creating binary "$(BIN)"'
-	@$(CC) -o $(BIN) $(OBJ) $(LIBS)
-	@echo '... done'
-	@echo
+bin: $(OBJ)
+	echo 'creating binary $(BIN)'
+	mkdir -p $(BINDIR)
+	$(CC) -o $(BIN) $(OBJ) $(LIBS)
+	echo '... done'
 
 depend:
-	@echo
-	@echo 'checking dependencies'
-	@$(SHELL) -ec '$(CC) -MM $(CFLAGS) -I$(INCDIR) -I$(ADDINCDIR) $(SRC) $(ADDSRC)                  \
+	echo 'checking dependencies'
+	$(SHELL) -ec '$(CC) -MM $(CFLAGS) -I$(INCDIR) -I$(ADDINCDIR) $(SRC) $(ADDSRC)                  \
          | sed '\''s@\(.*\)\.o[ :]@$(OBJDIR)/\1.o$(SUFFIX):@g'\''               \
          >$(DEPEND)'
-	@echo
+	echo
 
 $(OBJDIR)/%.o$(SUFFIX): $(SRCDIR)/%.c
-	@echo 'compiling object file "$@" ...'
+	echo 'compiling object file "$@" ...'
 	@$(CC) -c -o $@ $(FLAGS) $<
 
 $(OBJDIR)/%.o$(SUFFIX): $(ADDSRCDIR)/%.c
-	@echo 'compiling object file "$@" ...'
-	@$(CC) -c -o $@ $(FLAGS) $<
-
+	echo 'compiling object file "$@" ...'
+	$(CC) -c -o $@ $(FLAGS) $<
 
 include $(DEPEND)
-

@@ -22,7 +22,7 @@
 //**********************************************************************
 // Exp-Golomb codes
 //----------------------------------------------------------------------
-// 
+//
 //
 //
 
@@ -31,7 +31,7 @@ package ExpGolomb;
 import H264Types::*;
 
 
-      
+
    //-----------------------------------------------------------
    // Helper functions
    (* noinline *)
@@ -49,7 +49,7 @@ import H264Types::*;
    function Bit#(33) expgolomb_codenum32( Buffer inbuffer, Bufcount egnumbits );//exp-golomb codenum calculation
       Bit#(33) tempbuffer = inbuffer[buffersize-1:buffersize-33];
       Bufcount shiftamount = 33-egnumbits;
-      return (tempbuffer >> zeroExtend(shiftamount))-1;
+      return (tempbuffer >> shiftamount)-1;
    endfunction
 
    (* noinline *)
@@ -82,12 +82,12 @@ import H264Types::*;
    (* noinline *)
    function Bit#(17) expgolomb_codenum( Buffer inbuffer );//exp-golomb codenum calculation
       Bufcount egnumbits = expgolomb_numbits( inbuffer ) >> 1;
-      Bit#(33) tempbuffer = inbuffer[buffersize-1:buffersize-33] << zeroExtend(egnumbits);
+      Bit#(33) tempbuffer = inbuffer[buffersize-1:buffersize-33] << egnumbits;
       Bit#(17) tempout = tempbuffer[32:16];
       Bufcount shiftamount = 17-egnumbits-1;
-      return (tempout >> zeroExtend(shiftamount))-1;
+      return (tempout >> shiftamount)-1;
    endfunction
-   
+
    (* noinline *)
    function Bit#(16) expgolomb_unsigned( Buffer inbuffer );//unsigned exp-golomb code calculation
       Bit#(17) codenum = expgolomb_codenum( inbuffer );

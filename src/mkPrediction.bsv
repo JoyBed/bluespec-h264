@@ -47,7 +47,7 @@ import ClientServer::*;
 // Local Datatypes
 //-----------------------------------------------------------
 
-typedef union tagged                
+typedef union tagged
 {
  void     Intra;            //Intra non-4x4
  void     Intra4x4;
@@ -55,7 +55,7 @@ typedef union tagged
 }
 OutState deriving(Eq,Bits);
 
-typedef union tagged                
+typedef union tagged
 {
  void     Start;            //not working on anything in particular
  void     Intra16x16;
@@ -64,7 +64,7 @@ typedef union tagged
 }
 IntraState deriving(Eq,Bits);
 
-typedef union tagged                
+typedef union tagged
 {
  void     Start;            //not working on anything in particular
  void     InterP16x16;
@@ -93,7 +93,7 @@ typedef union tagged
 NextOutput deriving(Eq,Bits);
 
 
-      
+
 //-----------------------------------------------------------
 // Helper functions
 
@@ -179,7 +179,7 @@ module mkPrediction( IPrediction );
    Reg#(Bit#(PicAreaSz))   currMbHor <- mkReg(0);//horizontal position of currMb
    Reg#(Bit#(PicHeightSz)) currMbVer <- mkReg(0);//vertical position of currMb
 
-   FIFOF#(OutState)   outstatefifo   <- mkFIFOF;        
+   FIFOF#(OutState)   outstatefifo   <- mkFIFOF;
    FIFOF#(NextOutput) nextoutputfifo <- mkFIFOF;
    Reg#(Bit#(4))   outBlockNum    <- mkReg(0);
    Reg#(Bit#(4))   outPixelNum    <- mkReg(0);
@@ -188,9 +188,9 @@ module mkPrediction( IPrediction );
    Reg#(Bool)      outFirstQPFlag <- mkReg(False);
 
    DoNotFire donotfire <- mkDoNotFire();
-   
+
    //Reg#(Vector#(16,Bit#(8))) workVector       <- mkRegU();
-   
+
    //Inter state
    Interpolator interpolator <- mkInterpolator();
    Reg#(InterState) interstate <- mkReg(Start);
@@ -230,7 +230,7 @@ module mkPrediction( IPrediction );
    Reg#(Bit#(12)) mvverfinalR <- mkRegU();
    Reg#(Bit#(5)) interNewestMvNextR <- mkRegU();
 
-   
+
    Reg#(Bit#(2)) interIPStepCount <- mkReg(0);
    Reg#(Bit#(2)) interIPMbPartNum <- mkReg(0);
    Reg#(Bit#(2)) interIPSubMbPartNum <- mkReg(0);
@@ -242,8 +242,8 @@ module mkPrediction( IPrediction );
    FIFO#(Tuple2#(Bit#(2),Bit#(2))) interBSfifo <- mkSizedFIFO(32);
    Reg#(Bool) interBSoutput <- mkReg(True);
    FIFO#(InterBlockMv) interOutBlockMvfifo <- mkSizedFIFO(8);
-   
-   
+
+
    //Intra state
    Reg#(IntraState)     intrastate      <- mkReg(Start);
    Reg#(Bit#(1))        intraChromaFlag <- mkReg(0);
@@ -273,8 +273,8 @@ module mkPrediction( IPrediction );
    Reg#(Bit#(13)) intraSumA <-  mkReg(0);
    Reg#(Bit#(15)) intraSumB <-  mkReg(0);
    Reg#(Bit#(15)) intraSumC <-  mkReg(0);
-   
-   Reg#(Vector#(4,Bit#(8))) intraPredVector <- mkRegU();   
+
+   Reg#(Vector#(4,Bit#(8))) intraPredVector <- mkRegU();
 
    //-----------------------------------------------------------
    // Rules
@@ -300,7 +300,7 @@ module mkPrediction( IPrediction );
       $display( "Trace Prediction: checkFIFO_predicted %h", predictedfifo.first() );
    endrule
 
-   
+
    rule passing ( passFlag && !outstatefifo.notEmpty() && currMbHor<zeroExtend(picWidth) );
       $display( "Trace Prediction: passing infifo packed %h", pack(infifo.first()));
       case (infifo.first()) matches
@@ -555,7 +555,7 @@ module mkPrediction( IPrediction );
       endcase
    endrule
 
-   
+
    rule outputing ( currMbHor<zeroExtend(picWidth) );
       Bit#(1) outputFlag = 0;
       Vector#(4,Bit#(8)) outputVector = replicate(0);
@@ -569,7 +569,7 @@ module mkPrediction( IPrediction );
 	    if(infifo_ITB.first() matches tagged IBTmb_qp .xdata)
 	       begin
 		  infifo_ITB.deq();
-		  outfifo.enq(IBTmb_qp {qpy:xdata.qpy,qpc:xdata.qpc});
+		  outfifo.enq(tagged IBTmb_qp {qpy:xdata.qpy,qpc:xdata.qpc});
 		  outFirstQPFlag <= False;
 		  $display( "Trace Prediction: outputing outFirstQP %h %h %h", outBlockNum, outPixelNum, xdata);
 	       end
@@ -586,7 +586,7 @@ module mkPrediction( IPrediction );
 		  Bit#(2) tempVerBS = tpl_2(interBSfifo.first());
 		  Bit#(3) horBS = (tempHorBS==3 ? 4 : (interLeftNonZeroTransCoeff[blockVer] ? 2 : zeroExtend(tempHorBS)));
 		  Bit#(3) verBS = (tempVerBS==3 ? 4 : (interTopNonZeroTransCoeff[blockHor]&&blockVer!=0 ? 2 : zeroExtend(tempVerBS)));
-		  outfifo.enq(PBbS {bShor:horBS,bSver:verBS});
+		  outfifo.enq(tagged PBbS {bShor:horBS,bSver:verBS});
 		  interLeftNonZeroTransCoeff <= update(interLeftNonZeroTransCoeff, blockVer, False);
 		  interTopNonZeroTransCoeff <= update(interTopNonZeroTransCoeff, blockHor, False);
 		  $display( "Trace Prediction: outputing SkipMB bS %h %h %h %h", outBlockNum, outPixelNum, currMbHor, currMbVer);
@@ -687,7 +687,7 @@ module mkPrediction( IPrediction );
 	       default: $display( "ERROR Prediction: outputing unknown infifo_ITB input" );
 	    endcase
 	 end
- 
+
       if(outputFlag == 1)
 	 begin
 	    $display("ccl4PBoutput %0d", outputVector[0]);
@@ -701,7 +701,7 @@ module mkPrediction( IPrediction );
 		  interMemReqQ.enq(interMemReqQdelay);
 		  //$display( "TRACE Prediction: passing storing addr data");//////////////////
 	       end
-	    
+
 	    if(blockHor==3 || (blockHor[0]==1 && outChromaFlag==1) || (outstatefifo.first()==Intra4x4 && outChromaFlag==0))
 	       begin
 		  if(outChromaFlag==0)
@@ -709,7 +709,7 @@ module mkPrediction( IPrediction );
 			Bit#(32) intraLeftValNextTemp = intraLeftValNext;
 			if(totalVer==0 || (outstatefifo.first()==Intra4x4 && pixelVer==0))
 			   begin
-			      Bit#(32) tempValSet = select(intraTopVal,zeroExtend(blockHor));
+			      Bit#(32) tempValSet = select(intraTopVal,blockHor);
 			      intraLeftValNextTemp = zeroExtend(tempValSet[31:24]);
 			   end
 			case(pixelVer)
@@ -737,12 +737,12 @@ module mkPrediction( IPrediction );
 			   intraLeftValChroma1 <= update(intraLeftValChroma1,totalVer+1,outputVector[3]);
 		     end
 	       end
-			   
+
 	    if(pixelVer==3 && (blockVer==3 || (blockVer[0]==1 && outChromaFlag==1) || (outstatefifo.first()==Intra4x4 && outChromaFlag==0)))
 	       begin
 		  if(outChromaFlag==0)
 		     begin
-			intraTopVal <= update(intraTopVal,zeroExtend(blockHor),{outputVector[3],outputVector[2],outputVector[1],outputVector[0]});
+			intraTopVal <= update(intraTopVal,blockHor,{outputVector[3],outputVector[2],outputVector[1],outputVector[0]});
 			if(outstatefifo.first()==Intra4x4)
 			   intra4x4typeTop <= update(intra4x4typeTop,blockHor,cur_intra4x4_pred_mode);
 			else if(outstatefifo.first()==Intra)
@@ -775,15 +775,15 @@ module mkPrediction( IPrediction );
 		  InterBlockMv outBlockMv = interOutBlockMvfifo.first();
 		  if(outBlockMv matches tagged BlockMv .bdata)
 		     begin
-			outBlockMv = (BlockMv {refIdx:bdata.refIdx,mvhor:bdata.mvhor,mvver:bdata.mvver,nonZeroTransCoeff:(interTopNonZeroTransCoeff[pixelVer]?1:0)});
+			outBlockMv = (tagged BlockMv {refIdx:bdata.refIdx,mvhor:bdata.mvhor,mvver:bdata.mvver,nonZeroTransCoeff:(interTopNonZeroTransCoeff[pixelVer]?1:0)});
 			interOutBlockMvfifo.deq();
 		     end
 		  else if(pixelVer==3)
 		     interOutBlockMvfifo.deq();
 		  if(pixelVer==3 && picWidth>1)
-		     interMemReqQdelay <= StoreReq {addr:{tempStoreAddr,pixelVer},data:pack(outBlockMv)};
+		     interMemReqQdelay <= tagged StoreReq {addr:{tempStoreAddr,pixelVer},data:pack(outBlockMv)};
 		  else
-		     interMemReqQ.enq(StoreReq {addr:{tempStoreAddr,pixelVer},data:pack(outBlockMv)});
+		     interMemReqQ.enq(tagged StoreReq {addr:{tempStoreAddr,pixelVer},data:pack(outBlockMv)});
 		  if(pixelVer>0)
 		     begin
 			Bit#(4)  intra4x4typeTopStore = ((outstatefifo.first()==Inter) ? 14 : ((outstatefifo.first()!=Intra4x4) ? 13: intra4x4typeTop[(pixelVer-1)]));
@@ -791,7 +791,7 @@ module mkPrediction( IPrediction );
 			Bit#(16) intraTopValChroma0Store = intraTopValChroma0[(pixelVer-1)];
 			Bit#(16) intraTopValChroma1Store = (pixelVer<3 ? intraTopValChroma1[(pixelVer-1)] : {outputVector[1],outputVector[0]});
 			Bit#(68) intraStore = {intra4x4typeTopStore,intraTopValChroma1Store,intraTopValChroma0Store,intraTopValStore};
-			intraMemReqQ.enq(StoreReq {addr:{tempStoreAddr,(pixelVer-1)},data:intraStore});
+			intraMemReqQ.enq(tagged StoreReq {addr:{tempStoreAddr,(pixelVer-1)},data:intraStore});
 			if(pixelVer==3)
 			   begin
 			      intra4x4typeTopStore = ((outstatefifo.first()==Inter) ? 14 : ((outstatefifo.first()!=Intra4x4) ? 13: intra4x4typeTop[3]));
@@ -799,7 +799,7 @@ module mkPrediction( IPrediction );
 			      intraTopValChroma0Store = intraTopValChroma0[3];
 			      intraTopValChroma1Store = {outputVector[3],outputVector[2]};
 			      intraStore = {intra4x4typeTopStore,intraTopValChroma1Store,intraTopValChroma0Store,intraTopValStore};
-			      intraMemReqQdelay <= StoreReq {addr:{tempStoreAddr,2'b11},data:intraStore};
+			      intraMemReqQdelay <= tagged StoreReq {addr:{tempStoreAddr,2'b11},data:intraStore};
 			   end
 		     end
 	       end
@@ -918,7 +918,7 @@ module mkPrediction( IPrediction );
       $display( "Trace Prediction: interReceiveNoResp %h %h", interstate, interRespCount);
    endrule
 
-   
+
    rule interReceiveResp ( interRespCount>0 && interRespCount<7 && currMbHor<zeroExtend(picWidth) &&& interMemRespQ.first() matches tagged LoadResp .data);
       Bit#(PicAreaSz) currMbHorTemp = currMbHor+zeroExtend(interCurrMbDiff)-1;
       Bit#(PicAreaSz) currMbTemp = currMb+zeroExtend(interCurrMbDiff)-1;
@@ -933,7 +933,7 @@ module mkPrediction( IPrediction );
 	 begin
 	    temp2bit = truncate(interRespCount-1);
 	    interTopValNext[temp2bit] = unpackedData;
-	    if((interRespCount==4 || (interRespCount==1 && (interstate==InterPskip || interstate==InterP16x16 || interstate==InterP16x8))) 
+	    if((interRespCount==4 || (interRespCount==1 && (interstate==InterPskip || interstate==InterP16x16 || interstate==InterP16x8)))
 	       && (!((currMbHorTemp+1)<zeroExtend(picWidth)) && !(currMbHorTemp>0 && currMbTemp-firstMb>zeroExtend(picWidth))))
 	       noMoreResp = True;
 	 end
@@ -1042,7 +1042,7 @@ module mkPrediction( IPrediction );
 		       calcmv = (interSubMbPartNum[0]==0);
 		       leftmv = True;
 	            end
-	            2: 
+	            2:
 	            begin
 		       partWidth = 1;
 		       partHeight = 2;
@@ -1124,7 +1124,7 @@ module mkPrediction( IPrediction );
 		       begin
 		          mvhorABC[ii] = 0;
 			  mvverABC[ii] = 0;
-                       end     
+                       end
 	          end
 	       if(validCount != 1)//median
 	          begin
@@ -1267,14 +1267,14 @@ module mkPrediction( IPrediction );
             Vector#(5,InterBlockMv) interTopValNext = interTopVal;//update inter*Val
             Vector#(4,InterBlockMv) interLeftValNext = interLeftVal;
             Vector#(4,InterBlockMv) interTopLeftValNext = interTopLeftVal;
-            interLeftValNext[blockVer] = (BlockMv {refIdx:refIndex,mvhor:mvhorfinal,mvver:mvverfinal,nonZeroTransCoeff:0});
-            interTopValNext[blockHor] = (BlockMv {refIdx:refIndex,mvhor:mvhorfinal,mvver:mvverfinal,nonZeroTransCoeff:0});
+            interLeftValNext[blockVer] = (tagged BlockMv {refIdx:refIndex,mvhor:mvhorfinal,mvver:mvverfinal,nonZeroTransCoeff:0});
+            interTopValNext[blockHor] = (tagged BlockMv {refIdx:refIndex,mvhor:mvhorfinal,mvver:mvverfinal,nonZeroTransCoeff:0});
             interTopLeftValNext[blockVer] = interTopVal[blockHor];
             interTopVal <= interTopValNext;
             interLeftVal <= interLeftValNext;
             interTopLeftVal <= interTopLeftValNext;
             if(blockVer == 3)
-	       interOutBlockMvfifo.enq(BlockMv {refIdx:refIndex,mvhor:mvhorfinal,mvver:mvverfinal,nonZeroTransCoeff:0});
+	             interOutBlockMvfifo.enq(tagged BlockMv {refIdx:refIndex,mvhor:mvhorfinal,mvver:mvverfinal,nonZeroTransCoeff:0});
             if(interSubMbPartNum == 3)//next step
 	       begin
 	          interSubMbPartNum <= 0;
@@ -1291,9 +1291,9 @@ module mkPrediction( IPrediction );
 	       interSubMbPartNum <= interSubMbPartNum+1;
             if(interNewestMvNext > 0)
 	       interNewestMv <= interNewestMvNext;
- 
-            // Check to see if we are done. 
-            
+
+            // Check to see if we are done.
+
 	    if(allDone)
 	       interStepCount <= 0;
 	    else
@@ -1370,13 +1370,13 @@ module mkPrediction( IPrediction );
 		  btTemp = IP8x8;
 		  mvhorTemp = tpl_1(interMvFile.sub({interIPMbPartNumTemp,2'b00}));
 		  mvverTemp = tpl_2(interMvFile.sub({interIPMbPartNumTemp,2'b00}));
-		  interpolator.request(IPLuma {refIdx:refIndex,hor:horTemp,ver:verTemp,mvhor:mvhorTemp,mvver:mvverTemp,bt:btTemp});
+		  interpolator.request(tagged IPLuma {refIdx:refIndex,hor:horTemp,ver:verTemp,mvhor:mvhorTemp,mvver:mvverTemp,bt:btTemp});
 	       end
 	    else
-	       interpolator.request(IPLuma {refIdx:refIndex,hor:horTemp,ver:verTemp,mvhor:mvhorTemp,mvver:mvverTemp,bt:btTemp});
+	       interpolator.request(tagged IPLuma {refIdx:refIndex,hor:horTemp,ver:verTemp,mvhor:mvhorTemp,mvver:mvverTemp,bt:btTemp});
 	 end
       else
-	 interpolator.request(IPChroma {refIdx:refIndex,uv:interIPStepCount[0],hor:horTemp,ver:truncate(verTemp>>1),mvhor:mvhorTemp,mvver:mvverTemp,bt:btTemp});
+	 interpolator.request(tagged IPChroma {refIdx:refIndex,uv:interIPStepCount[0],hor:horTemp,ver:truncate(verTemp>>1),mvhor:mvhorTemp,mvver:mvverTemp,bt:btTemp});
       if(interIPSubMbPartNum >= truncate(numSubPart-1))
 	 begin
 	    interIPSubMbPartNum <= 0;
@@ -1409,7 +1409,7 @@ module mkPrediction( IPrediction );
       //$display( "Trace Prediction: interOutputTransfer %h %h", interstate, interOutputCount);
    endrule
 
-   
+
    rule interOutputTransfer ( True );
       predictedfifo.enq(interpolator.first());
       interpolator.deq();
@@ -1474,7 +1474,7 @@ module mkPrediction( IPrediction );
       $display( "Trace Prediction: intraReceiveNoResp");
    endrule
 
-   
+
    rule intraReceiveResp ( intraRespCount>0 && intraRespCount<7 && currMbHor<zeroExtend(picWidth) &&& intraMemRespQ.first() matches tagged LoadResp .data);
       Bit#(1) noMoreResp = 0;
       Bit#(2) temp2bit = 0;
@@ -1537,7 +1537,7 @@ module mkPrediction( IPrediction );
       $display( "Trace Prediction: intraReceiveResp");
    endrule
 
-   
+
    rule intraPredTypeStep ( intraStepCount==1 && !nextoutputfifo.notEmpty());
       Bit#(2) blockHor = {blockNum[2],blockNum[0]};
       Bit#(2) blockVer = {blockNum[3],blockNum[1]};
@@ -1637,7 +1637,7 @@ module mkPrediction( IPrediction );
 	       begin
 		  outFlag = 1;
 		  Bit#(40) leftValSet = select(intraLeftVal,blockVer);
-		  Bit#(32) topMidValSet = select(intraTopVal,zeroExtend(blockHor));
+		  Bit#(32) topMidValSet = select(intraTopVal,blockHor);
 		  Bit#(32) topRightValSet = select(intraTopVal,{1'b0,blockHor}+1);
 		  Bit#(72) topValSet;
 		  if((blockNum[3:2]==3 && blockNum[0]==1) || blockNum[1:0]==3)
@@ -2170,7 +2170,7 @@ module mkPrediction( IPrediction );
 			Bit#(8) topVal1 = select16to8(topValSet1,xyPlusFour[0]);
 			Bit#(4) tempLeftIdx1 = {1'b0,xyPlusFour} + 1;
 			Bit#(8) leftVal1 = select(tempLeftVec,tempLeftIdx1);
-			
+
 			Bit#(16) topValSet2 = select(tempTopVec,twoMinusXY[2:1]);
 			Bit#(8) topVal2;
 			Bit#(8) leftVal2 = select(tempLeftVec,twoMinusXY+1);
@@ -2264,8 +2264,8 @@ module mkPrediction( IPrediction );
       //$display( "Trace Prediction: intraProcessStep");
    endrule
 
-   
-   
+
+
    interface Client mem_client_intra;
       interface Get request  = fifoToGet(intraMemReqQ);
       interface Put response = fifoToPut(intraMemRespQ);
@@ -2280,7 +2280,7 @@ module mkPrediction( IPrediction );
    interface Put ioin_InverseTrans  = fifoToPut(infifo_ITB);
    interface Get ioout = fifoToGet(outfifo);
 
-      
+
 endmodule
 
 endpackage

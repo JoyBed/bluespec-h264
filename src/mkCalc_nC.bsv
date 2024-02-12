@@ -60,7 +60,7 @@ module mkCalc_nC( Calc_nC );
    FIFO#(MemResp#(20))                    memRespQ <- mkFIFO;
    Bit#(1) bit1 = 1;
    Bit#(1) bit0 = 0;
- 
+
    rule currMbHorUpdate( !(currMbHor<zeroExtend(picWidth)) );
       Bit#(PicAreaSz) temp = zeroExtend(picWidth);
       if((currMbHor >> 3) >= temp)
@@ -94,7 +94,7 @@ module mkCalc_nC( Calc_nC );
       currMbHor <= currMbHor+1;
       Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
       Bit#(TAdd#(PicWidthSz,1)) temp  = {bit1,temp2};
-      memReqQ.enq(StoreReq {addr:temp,data:20'b10000100001000010000} );
+      memReqQ.enq(tagged StoreReq {addr:temp,data:20'b10000100001000010000} );
       ipcmCount <= 0;
       waiting <= 0;
    endrule
@@ -106,7 +106,7 @@ module mkCalc_nC( Calc_nC );
 	    currMbHor <= currMbHor+1;
 	    Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
 	    Bit#(TAdd#(PicWidthSz,1)) temp  = {bit1,temp2};
-	    memReqQ.enq(StoreReq {addr:temp,data:20'b00000000000000000000} );
+	    memReqQ.enq(tagged StoreReq {addr:temp,data:20'b00000000000000000000} );
 	    if(pskipCount == 1)
 	       waiting <= 0;
 	 end
@@ -114,7 +114,7 @@ module mkCalc_nC( Calc_nC );
 	 begin
 	    Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
 	    Bit#(TAdd#(PicWidthSz,1)) temp  = {bit0,temp2};
-	    memReqQ.enq(StoreReq {addr:temp,data:20'b00000000000000000000} );
+	    memReqQ.enq(tagged StoreReq {addr:temp,data:20'b00000000000000000000} );
 	 end
       pskipCount <= pskipCount - 1;
    endrule
@@ -122,7 +122,7 @@ module mkCalc_nC( Calc_nC );
    method Action initialize_picWidth( Bit#(PicWidthSz) picWidthInMb ) if( waiting == 0 && currMbHor<zeroExtend(picWidth) );
       picWidth  <= picWidthInMb;
    endmethod
-   
+
    method Action initialize( Bit#(PicAreaSz) firstMbAddr ) if( waiting == 0 && currMbHor<zeroExtend(picWidth) );
       firstMb   <= firstMbAddr;
       currMb    <= firstMbAddr;
@@ -249,14 +249,14 @@ module mkCalc_nC( Calc_nC );
 	 begin
 	    Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
 	    Bit#(TAdd#(PicWidthSz,1)) temp  = {bit0,temp2};
-	    memReqQ.enq(StoreReq {addr:temp,data:topValTemp} );
+	    memReqQ.enq(tagged StoreReq {addr:temp,data:topValTemp} );
 	 end
       //$display( "TRACE nNupdate_luma old leftVal %b", leftVal );
       //$display( "TRACE nNupdate_luma old topVal %b", topVal );
       //$display( "TRACE nNupdate_luma microBlockNum %0d", microBlockNum );
       //$display( "TRACE nNupdate_luma totalCoeff %0d", totalCoeff );
    endmethod
-   
+
    method Action  nNupdate_chroma( Bit#(3) microBlockNum, Bit#(5) totalCoeff ) if( waiting == 0 && currMbHor<zeroExtend(picWidth) );
       Bit#(10) topValChroma0Temp = topValChroma0;
       Bit#(10) topValChroma1Temp = topValChroma1;
@@ -280,7 +280,7 @@ module mkCalc_nC( Calc_nC );
 	    if(microBlockNum[0]==0)
 	       topValChroma1Temp = {topValChroma1[9:5] , totalCoeff};
 	    else
-	       topValChroma1Temp = {totalCoeff , topValChroma1[4:0]};	    
+	       topValChroma1Temp = {totalCoeff , topValChroma1[4:0]};
 	 end
       topValChroma0 <= topValChroma0Temp;
       topValChroma1 <= topValChroma1Temp;
@@ -290,7 +290,7 @@ module mkCalc_nC( Calc_nC );
 	    currMbHor <= currMbHor+1;
 	    Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
 	    Bit#(TAdd#(PicWidthSz,1)) temp  = {bit1,temp2};
-	    memReqQ.enq(StoreReq {addr:temp,data:{topValChroma1Temp,topValChroma0Temp}} );
+	    memReqQ.enq(tagged StoreReq {addr:temp,data:{topValChroma1Temp,topValChroma0Temp}} );
 	 end
    endmethod
 
@@ -303,13 +303,13 @@ module mkCalc_nC( Calc_nC );
 	    pskipCount <= (inmb_skip_run << 1)-1;
 	    Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
 	    Bit#(TAdd#(PicWidthSz,1)) temp  = {bit0,temp2};
-	    memReqQ.enq(StoreReq {addr:temp,data:20'b00000000000000000000} );
+	    memReqQ.enq(tagged StoreReq {addr:temp,data:20'b00000000000000000000} );
 	    leftVal <= 0;
 	    leftValChroma0 <= 10'b0000000000;
 	    leftValChroma1 <= 10'b0000000000;
 	 end
    endmethod
-   
+
    method Action  nNupdate_ipcm() if( waiting == 0 && currMbHor<zeroExtend(picWidth) );
       leftVal <= 20'b10000100001000010000;
       leftValChroma0 <= 10'b1000010000;
@@ -320,7 +320,7 @@ module mkCalc_nC( Calc_nC );
       ipcmCount <= 1;
       Bit#(PicWidthSz)          temp2 = truncate(currMbHor);
       Bit#(TAdd#(PicWidthSz,1)) temp  = {bit0,temp2};
-      memReqQ.enq(StoreReq {addr:temp,data:20'b10000100001000010000} );
+      memReqQ.enq(tagged StoreReq {addr:temp,data:20'b10000100001000010000} );
    endmethod
 
    interface Client mem_client;

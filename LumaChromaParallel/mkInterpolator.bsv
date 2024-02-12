@@ -80,7 +80,7 @@ endfunction
 
 (* synthesize *)
 module mkInterpolator( Interpolator );
-   
+
    FIFO#(InterpolatorIT) reqfifoLoad <- mkSizedFIFO(interpolator_reqfifoLoad_size);
    FIFO#(InterpolatorWT) reqfifoWork1 <- mkSizedFIFO(interpolator_reqfifoWork_size);
    Reg#(Maybe#(InterpolatorWT)) reqregWork2 <- mkReg(Invalid);
@@ -127,15 +127,15 @@ module mkInterpolator( Interpolator );
 
    rule incr;
      total_cycles <= total_cycles + 1;
-   endrule   
+   endrule
 
    rule sendEndOfFrameReq( endOfFrameFlag );
       endOfFrameFlag <= False;
       $display("trace interpolator sending EndOfFrame");
       memReqQ.enq(IPLoadEndFrame);
    endrule
-   
-   
+
+
    rule loadLuma( reqfifoLoad.first() matches tagged IPLuma .reqdata &&& !endOfFrameFlag );
       Bit#(2) xfracl = reqdata.mvhor[1:0];
       Bit#(2) yfracl = reqdata.mvver[1:0];
@@ -178,7 +178,7 @@ module mkInterpolator( Interpolator );
 	       verAddr = truncate(verTemp);
 	 end
       $display("PARDEBLOCK issuing Luma memory req");
-      memReqQ.enq(IPLoadLuma {refIdx:reqdata.refIdx,horOutOfBounds:horOut,hor:horAddr,ver:verAddr});
+      memReqQ.enq(tagged IPLoadLuma {refIdx:reqdata.refIdx,horOutOfBounds:horOut,hor:horAddr,ver:verAddr});
       Bool verFirst = twoStage || (yfracl==2&&(xfracl==1||xfracl==3));
       Bit#(2) loadHorNumMax = (reqdata.bt==IP8x8||reqdata.bt==IP8x4 ? 1 : 0) + (horInter ? 2 : (offset2==0 ? 0 : 1));
       Bit#(4) loadVerNumMax = (reqdata.bt==IP8x8||reqdata.bt==IP4x8 ? 7 : 3) + (verInter ? 5 : 0);
@@ -245,7 +245,7 @@ module mkInterpolator( Interpolator );
       if(reqdata.bt==IP16x16 || reqdata.bt==IP16x8 || reqdata.bt==IP8x16)
 	 $display( "ERROR Interpolation: loadLuma block sizes > 8x8 not supported");
       $display( "PARDEBLOCK Trace interpolator(%0d)): loadLuma %h %h %h %h %h %h %h", total_cycles,xfracl, yfracl, loadHorNum, loadVerNum, reqdata.refIdx, horAddr, verAddr);
-   endrule   
+   endrule
 
 
    rule loadChroma( reqfifoLoad.first() matches tagged IPChroma .reqdata &&& !endOfFrameFlag );
@@ -284,7 +284,7 @@ module mkInterpolator( Interpolator );
 	       verAddr = truncate(verTemp);
 	 end
       $display("PARDEBLOCK issuing Chroma memory req");
-      memReqQ.enq(IPLoadChroma {refIdx:reqdata.refIdx,uv:reqdata.uv,horOutOfBounds:horOut,hor:horAddr,ver:verAddr});
+      memReqQ.enq(tagged IPLoadChroma {refIdx:reqdata.refIdx,uv:reqdata.uv,horOutOfBounds:horOut,hor:horAddr,ver:verAddr});
       Bit#(2) loadHorNumMax = (reqdata.bt==IP4x8||reqdata.bt==IP4x4 ? (offset[1]==0||(xfracc==0&&offset!=3) ? 0 : 1) : ((reqdata.bt==IP16x16||reqdata.bt==IP16x8 ? 1 : 0) + (xfracc==0&&offset==0 ? 0 : 1)));
       Bit#(4) loadVerNumMax = (reqdata.bt==IP16x16||reqdata.bt==IP8x16 ? 7 : (reqdata.bt==IP16x8||reqdata.bt==IP8x8||reqdata.bt==IP4x8 ? 3 : 1)) + (yfracc==0 ? 0 : 1);
       if(loadHorNum < loadHorNumMax)
@@ -302,7 +302,7 @@ module mkInterpolator( Interpolator );
 	 end
       $display( "PARDEB Trace interpolator(%0d): loadChroma %h %h %h %h %h %h %h", total_cycles, xfracc, yfracc, loadHorNum, loadVerNum, reqdata.refIdx, horAddr, verAddr);
    endrule
-   
+
 
    rule work1Luma ( reqfifoWork1.first() matches tagged IPWLuma .reqdata &&& !work1Done );
       let xfracl = reqdata.xFracL;
@@ -461,7 +461,7 @@ module mkInterpolator( Interpolator );
 			      work1Done <= True;
 			   end
 		     end
-	       end		 
+	       end
 	 end
       work1Vector8 <= work1Vector8Next;
       $display( "PARDEBLOCK Trace interpolator(%0d): work1Luma %h %h %h %h %h %h", total_cycles, xfracl, yfracl, work1HorNum, work1VerNum, offset, work1Stage);
@@ -521,7 +521,7 @@ module mkInterpolator( Interpolator );
 	       work2Vector15Next[ii+16] = readdata[ii];
 	    Bit#(2) workHorNumMax = 1;
 	    Bit#(4) workVerNumMax = (blockT==IP8x8||blockT==IP4x8 ? 7 : 3) + 5;
-	    if(work2VerNum > 4)				  
+	    if(work2VerNum > 4)
 	       begin
 		  Bit#(1) horAddr = truncate(work2HorNum);
 		  Bit#(3) verAddr = truncate(work2VerNum-5);
@@ -818,7 +818,7 @@ module mkInterpolator( Interpolator );
       reqfifoWork1.deq();
       $display( "Trace interpolator: switching %h %h", outBlockNum, outPixelNum);
    endrule
-   
+
 
    rule switching8x8( work1Done && (work2Done || reqregWork2==Invalid) && work8x8Done && outDone);
       outDone <= False;
@@ -832,33 +832,31 @@ module mkInterpolator( Interpolator );
       $display( "Trace interpolator: switching8x8 %h %h", outBlockNum, outPixelNum);
    endrule
 
-
-
    method Action   setPicWidth( Bit#(PicWidthSz) newPicWidth );
       picWidth <= newPicWidth;
    endmethod
-   
+
    method Action   setPicHeight( Bit#(PicHeightSz) newPicHeight );
       picHeight <= newPicHeight;
    endmethod
-   
+
    method Action request( InterpolatorIT inputdata );
       reqfifoLoad.enq(inputdata);
       if(inputdata matches tagged IPLuma .indata)
-	 reqfifoWork1.enq(IPWLuma {xFracL:indata.mvhor[1:0],yFracL:indata.mvver[1:0],offset:indata.mvhor[3:2],bt:indata.bt});
+	 reqfifoWork1.enq(tagged IPWLuma {xFracL:indata.mvhor[1:0],yFracL:indata.mvver[1:0],offset:indata.mvhor[3:2],bt:indata.bt});
       else if(inputdata matches tagged IPChroma .indata)
-	 reqfifoWork1.enq(IPWChroma {xFracC:indata.mvhor[2:0],yFracC:indata.mvver[2:0],offset:indata.mvhor[4:3]+{indata.hor[0],1'b0},bt:indata.bt});
+	 reqfifoWork1.enq(tagged IPWChroma {xFracC:indata.mvhor[2:0],yFracC:indata.mvver[2:0],offset:indata.mvhor[4:3]+{indata.hor[0],1'b0},bt:indata.bt});
    endmethod
 
    method Vector#(4,Bit#(8)) first();
       return outfifo.first();
    endmethod
-   
+
    method Action deq();
       outfifo.deq();
    endmethod
 
-   
+
    method Action endOfFrame();
       endOfFrameFlag <= True;
    endmethod
@@ -872,7 +870,7 @@ module mkInterpolator( Interpolator );
    endmethod
 
    interface mem_client_resp = fifoToPut(memRespQ);
-   
+
 endmodule
 
 

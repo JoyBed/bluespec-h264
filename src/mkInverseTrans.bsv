@@ -44,7 +44,7 @@ import ClientServer::*;
 // Local Datatypes
 //-----------------------------------------------------------
 
-typedef union tagged                
+typedef union tagged
 {
  void     Start;            //not working on anything in particular
  void     Intra16x16DC;
@@ -55,7 +55,7 @@ typedef union tagged
 }
 State deriving(Eq,Bits);
 
-typedef union tagged                
+typedef union tagged
 {
  void     Passing;          //not working on anything in particular
  void     LoadingDC;
@@ -65,7 +65,7 @@ typedef union tagged
 }
 Process deriving(Eq,Bits);
 
-typedef union tagged                
+typedef union tagged
 {
  void     Invalid;
  void     Zeros;
@@ -73,7 +73,7 @@ typedef union tagged
 }
 PipeType deriving(Eq,Bits);
 
-      
+
 //-----------------------------------------------------------
 // Helper functions
 
@@ -203,12 +203,12 @@ module mkInverseTrans( IInverseTrans );
    Reg#(Bit#(3))              stage2Step  <- mkReg(0);
    Reg#(Bit#(2))              stage3Step  <- mkReg(0);
 
-   
+
 
    //-----------------------------------------------------------
    // Rules
 
-   
+
    rule passing (process==Passing && work2Vector==Invalid && (stage3Done || work3Vector==Invalid) );
       //$display( "Trace Inverse Trans: passing infifo packed %h", pack(infifo.first()));
       case (infifo.first()) matches
@@ -247,7 +247,7 @@ module mkInverseTrans( IInverseTrans );
 	       else
 		  qpi = truncate(qpitemp-12);
 	       qpc <= qpi_to_qpc(qpi);
-	       outfifo.enq(IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
+	       outfifo.enq(tagged IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
 	    end
 	 tagged SDMmb_qp_delta .xdata :
 	    begin
@@ -261,7 +261,7 @@ module mkInverseTrans( IInverseTrans );
 	       else
 		  qpynext = truncate(qpytemp);
 	       qpy <= qpynext;
-	       
+
 	       //$display( "TRACE InverseTrans: qpy %0d", qpynext );
 	       //$display( "TRACE InverseTrans: qpy %0d", qpynext );
 	       Tuple2#(Bit#(4),Bit#(3)) temptuple = qpdivmod6(qpynext);
@@ -279,7 +279,7 @@ module mkInverseTrans( IInverseTrans );
 	       else
 		  qpi = truncate(qpitemp-12);
 	       qpc <= qpi_to_qpc(qpi);
-	       outfifo.enq(IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
+	       outfifo.enq(tagged IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
 	    end
 	 tagged PPSchroma_qp_index_offset .xdata :
 	    begin
@@ -444,7 +444,7 @@ module mkInverseTrans( IInverseTrans );
 	 $display( "ERROR InverseTrans: transformingDC unexpected state" );
    endrule
 
-   
+
    rule scalingDC (process matches ScalingDC);
       Bit#(6)  qp;
       Bit#(4)  qpdiv6;
@@ -481,13 +481,13 @@ module mkInverseTrans( IInverseTrans );
       endcase
       storeValueTemp = zeroExtend(levelScaleValue)*signExtend(workValue);
       if(state==ChromaDC)
-	 storeValue = truncate( (storeValueTemp << zeroExtend(qpdiv6)) >> 1 );
+	       storeValue = truncate( (storeValueTemp << qpdiv6) >> 1 );
       else
 	 begin
 	    if(qp >= 36)
-	       storeValue = truncate( storeValueTemp << zeroExtend(qpdiv6 - 2) );
+	       storeValue = truncate( storeValueTemp << (qpdiv6 - 2) );
 	    else
-	       storeValue = truncate( ((storeValueTemp << 4) + zeroExtend(workOne << zeroExtend(5-qpdiv6))) >> zeroExtend(6 - qpdiv6) );
+	       storeValue = truncate( ((storeValueTemp << 4) + zeroExtend(workOne << (5-qpdiv6))) >> (6 - qpdiv6) );
 	 end
       storeVector <= update(storeVectorTemp, pixelNum, storeValue);
       if((state==ChromaDC && pixelNum==7) || pixelNum==15)
@@ -643,7 +643,7 @@ module mkInverseTrans( IInverseTrans );
 		  end
 	       Bit#(16) workValueTemp = zeroExtend(levelScaleValue)*signExtend(xdata.level);
 	       Bit#(16) workValue;
-	       workValue = workValueTemp << zeroExtend(qpdiv6);
+	       workValue = workValueTemp << qpdiv6;
 	       workVector <= update(workVectorTemp, reverseInverseZigZagScan(pixelNum), workValue);
 	       if(zeroExtend(pixelNum)+1+xdata.zeros==16 || (zeroExtend(pixelNum)+1+xdata.zeros==15 && (state==Chroma || state==Intra16x16)))
 		  begin
@@ -719,7 +719,7 @@ module mkInverseTrans( IInverseTrans );
    interface Put ioin  = fifoToPut(infifo);
    interface Get ioout = fifoToGet(outfifo);
 
-      
+
 endmodule
 
 endpackage

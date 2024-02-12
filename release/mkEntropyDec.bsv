@@ -44,11 +44,11 @@ import ClientServer::*;
 // Local Datatypes
 //-----------------------------------------------------------
 
-typedef union tagged                
+typedef union tagged
 {
  void     Start;            //special state that initializes the process.
  void     NewUnit;          //special state that checks the NAL unit type.
-		 
+
  Bit#(5)  CodedSlice;       //decodes a type of NAL unit
  void     SEI;              //decodes a type of NAL unit
  Bit#(5)  SPS;              //decodes a type of NAL unit
@@ -67,9 +67,9 @@ typedef union tagged
 State deriving(Eq,Bits);
 
 
-      
+
 //-----------------------------------------------------------
-// Helper functions   
+// Helper functions
 function MbType mbtype_convert( Bit#(5) in_mb_type, Bit#(4) in_slice_type );//converts mb_type syntax element to MbType type
    Bit#(5) tempmb = in_mb_type;
    if(in_slice_type == 2 || in_slice_type == 7)//I slice
@@ -98,7 +98,7 @@ function MbType mbtype_convert( Bit#(5) in_mb_type, Bit#(4) in_slice_type );//co
 	       tempv3 = 1;
 	       tempv2 = tempmb16x16[3:2]+1;
 	    end
-	 return I_16x16{intra16x16PredMode:tempv1, codedBlockPatternChroma:tempv2, codedBlockPatternLuma:tempv3};
+	 return tagged I_16x16{intra16x16PredMode:tempv1, codedBlockPatternChroma:tempv2, codedBlockPatternLuma:tempv3};
       end
    endcase
 endfunction
@@ -112,11 +112,11 @@ endfunction
 
 (* synthesize *)
 module mkEntropyDec( IEntropyDec );
-   
+
    FIFO#(NalUnwrapOT)       infifo      <- mkSizedFIFO(entropyDec_infifo_size);
    FIFO#(EntropyDecOT)      outfifo     <- mkFIFO;
    FIFO#(EntropyDecOT_InverseTrans) outfifo_ITB <- mkFIFO;
-   Reg#(State)              state       <- mkReg(Start);   
+   Reg#(State)              state       <- mkReg(Start);
    Reg#(Bit#(2))            nalrefidc   <- mkReg(0);
    Reg#(Bit#(5))            nalunittype <- mkReg(0);
    Reg#(Buffer)             buffer      <- mkReg(0);
@@ -139,7 +139,7 @@ module mkEntropyDec( IEntropyDec );
    Reg#(Bit#(2))              sdmcodedBlockPatternChroma                 <- mkReg(0);
    Reg#(Bit#(5))              sdmrTotalCoeff                             <- mkReg(0);
    Reg#(Bit#(2))              sdmrTrailingOnes                           <- mkReg(0);
-   
+
    //derived decoding variables for slice data
    Reg#(Bit#(16))             tempreg                                    <- mkReg(0);
    Reg#(Bit#(5))              num_ref_idx_l0_active_minus1               <- mkReg(0);
@@ -165,7 +165,7 @@ module mkEntropyDec( IEntropyDec );
    Reg#(Bit#(3))              extrabufcount                              <- mkReg(0);
    Reg#(Bit#(1))              extraendnalflag                            <- mkReg(0);
    Reg#(Bit#(1))              endnalflag                                 <- mkReg(0);
-   
+
 
    //-----------------------------------------------------------
    // Rules
@@ -196,7 +196,7 @@ module mkEntropyDec( IEntropyDec );
       endcase
    endrule
 
-   
+
    rule newunit (state matches NewUnit);
       case (infifo.first()) matches
 	 tagged NewUnit : state <= Start;
@@ -255,7 +255,7 @@ module mkEntropyDec( IEntropyDec );
 	    //$display( "TRACE EntropyDec: fillextrabuffer else %h", extrabufcount);
 	 end
    endrule
-   
+
 
    rule fillbuffer (state != Start
 		    && state != NewUnit
@@ -264,7 +264,7 @@ module mkEntropyDec( IEntropyDec );
 		    && endnalflag == 0);//predicate not sure
       Buffer temp = zeroExtend(extrabuffer);
       Bufcount temp2 = truncate(buffersize)-bufcount-32;
-      buffer <= (buffer | (temp << zeroExtend(temp2)));
+      buffer <= (buffer | (temp << temp2));
       case ( extrabufcount )
 	 4: bufcount <= bufcount+32;
 	 3: bufcount <= bufcount+24;
@@ -284,14 +284,14 @@ module mkEntropyDec( IEntropyDec );
                 &&& state != NewUnit
 		&&& (bufcount > truncate(buffersize-32) || endnalflag == 1));//predicate not sure
       //$display( "TRACE EntropyDec: fillbuffer RbspByte %h %h", bufcount, buffer );
-      
+
       Bufcount numbitsused = 0;
       State nextstate = Start;
       Int#(16) tempint = 0;
       Int#(32) tempint32 = 0;
-      
+
       case ( state ) matches
-	 tagged CodedSlice .step : 
+	 tagged CodedSlice .step :
 	    begin
 	       case ( step )
 		  0:
@@ -322,7 +322,7 @@ module mkEntropyDec( IEntropyDec );
 		  3:
 		  begin
 		     Bit#(16) tttt = buffer[buffersize-1:buffersize-16];
-		     tttt = tttt >> 16 - zeroExtend(spslog2_max_frame_num);
+		     tttt = tttt >> 16 - spslog2_max_frame_num;
 		     $display( "ccl2SHframe_num %0d", tttt );
 		     outfifo.enq(tagged SHframe_num tttt);
 		     numbitsused = zeroExtend(spslog2_max_frame_num);
@@ -343,7 +343,7 @@ module mkEntropyDec( IEntropyDec );
 		     if(spspic_order_cnt_type == 0)
 			begin
 			   Bit#(16) tttt = buffer[buffersize-1:buffersize-16];
-			   tttt = tttt >> 16 - zeroExtend(spslog2_max_pic_order_cnt_lsb);
+			   tttt = tttt >> 16 - spslog2_max_pic_order_cnt_lsb;
 			   $display( "ccl2SHpic_order_cnt_lsb %0d", tttt );
 			   outfifo.enq(tagged SHpic_order_cnt_lsb tttt);
 			   numbitsused = zeroExtend(spslog2_max_pic_order_cnt_lsb);
@@ -463,7 +463,7 @@ module mkEntropyDec( IEntropyDec );
 			nextstate = tagged CodedSlice 15;
 		  end
 		  12:
-		  begin 
+		  begin
 		     $display( "ccl2SHRreordering_of_pic_nums_idc %0d", expgolomb_unsigned(buffer) );
 		     outfifo.enq(tagged SHRreordering_of_pic_nums_idc truncate(expgolomb_unsigned(buffer)));
 		     numbitsused = expgolomb_numbits(buffer);
@@ -520,7 +520,7 @@ module mkEntropyDec( IEntropyDec );
 		     numbitsused = 1;
 		     if(buffer[buffersize-1] == 1)
 			nextstate = tagged CodedSlice 18;
-		     else 
+		     else
 			nextstate = tagged CodedSlice 23;
 		  end
 		  18:
@@ -627,14 +627,15 @@ module mkEntropyDec( IEntropyDec );
 		     nextstate = tagged SliceData 0;
 		  end
 		  default: $display( "ERROR EntropyDec: CodedSlice default step" );
-	       endcase	       
+	       endcase
 	    end
-	 tagged SEI .step : 
+	 tagged SEI:
+	 // tagged SEI .step :
 	    begin
 	       nextstate = Start;
-	       $display( "INFO EntropyDec: SEI data thrown away" );
+	       $display( "INFO EntropyDec: SEI data thrown away");
 	    end
-	 tagged SPS .step : 
+	 tagged SPS .step :
 	    begin
 	       case ( step )
 		  0:
@@ -671,11 +672,11 @@ module mkEntropyDec( IEntropyDec );
 		     outfifo.enq(tagged SPSpic_order_cnt_type truncate(tttt));
 		     spspic_order_cnt_type <= truncate(tttt);
 		     numbitsused = expgolomb_numbits(buffer);
-		     if(tttt == 0) 
+		     if(tttt == 0)
 			nextstate = tagged SPS 4;
-		     else if(tttt == 1) 
+		     else if(tttt == 1)
 			nextstate = tagged SPS 5;
-		     else 
+		     else
 			nextstate = tagged SPS 10;
 		  end
 		  4:
@@ -742,7 +743,7 @@ module mkEntropyDec( IEntropyDec );
 		  end
 		  9:
 		  begin
-		     if(spsnum_ref_frames_in_pic_order_cnt_cycle == 0) 
+		     if(spsnum_ref_frames_in_pic_order_cnt_cycle == 0)
 			nextstate = tagged SPS 10;
 		     else
 			begin
@@ -812,9 +813,9 @@ module mkEntropyDec( IEntropyDec );
 		     $display( "ccl2SPSframe_cropping_flag %0d", buffer[buffersize-1] );
 		     outfifo.enq(tagged SPSframe_cropping_flag buffer[buffersize-1]);
 		     numbitsused = 1;
-		     if(buffer[buffersize-1] == 1) 
+		     if(buffer[buffersize-1] == 1)
 			nextstate = tagged SPS 17;
-		     else 
+		     else
 			nextstate = tagged SPS 21;
 		  end
 		  17:
@@ -853,7 +854,7 @@ module mkEntropyDec( IEntropyDec );
 		  default: $display( "ERROR EntropyDec: SPS default step" );
 	       endcase
 	    end
-	 tagged PPS .step : 
+	 tagged PPS .step :
 	    begin
 	       case ( step )
 		  0:
@@ -871,7 +872,7 @@ module mkEntropyDec( IEntropyDec );
 		     outfifo.enq(tagged PPSseq_parameter_set_id truncate(expgolomb_unsigned(buffer)));
 		     numbitsused = expgolomb_numbits(buffer);
 		     nextstate = tagged PPS 2;
-		     if(spsseq_parameter_set_id != truncate(expgolomb_unsigned(buffer))) 
+		     if(spsseq_parameter_set_id != truncate(expgolomb_unsigned(buffer)))
 			$display( "ERROR EntropyDec: seq_parameter_set_id don't match" );
 		  end
 		  2:
@@ -892,7 +893,7 @@ module mkEntropyDec( IEntropyDec );
 		  begin
 		     numbitsused = expgolomb_numbits(buffer);
 		     nextstate = tagged PPS 5;
-		     if(expgolomb_unsigned(buffer)+1 != 1) 
+		     if(expgolomb_unsigned(buffer)+1 != 1)
 			$display( "ERROR EntropyDec: PPSnum_slice_groups not equal to 1" );//=1 for main
 		  end
 		  5:
@@ -958,7 +959,7 @@ module mkEntropyDec( IEntropyDec );
 		     //PPSredundant_pic_cnt_present_flag = 0 for main
 		     numbitsused = 1;
 		     nextstate = tagged PPS 14;
-		     if(buffer[buffersize-1] != 0) 
+		     if(buffer[buffersize-1] != 0)
 			$display( "ERROR EntropyDec: PPSredundant_pic_cnt_present_flag not equal to 0" );//=0 for main
 		  end
 		  14:
@@ -968,27 +969,28 @@ module mkEntropyDec( IEntropyDec );
 		  default: $display( "ERROR EntropyDec: PPS default step" );
 	       endcase
 	    end
-	 tagged AUD .step : 
+	 tagged AUD :
+	 // tagged AUD .step :
 	    begin
 	       outfifo.enq(tagged AUDPrimaryPicType buffer[buffersize-1:buffersize-3]);
 	       numbitsused = 3;
 	       nextstate = Start;
 	    end
-	 tagged EndSequence : 
+	 tagged EndSequence :
 	    begin
 	       outfifo.enq(tagged EndOfSequence);
 	       nextstate = Start;
 	    end
-	 tagged EndStream : 
+	 tagged EndStream :
 	    begin
 	       outfifo.enq(tagged EndOfStream);
 	       nextstate = Start;
 	    end
-	 tagged Filler : 
+	 tagged Filler :
 	    begin
 	       nextstate = Start;
 	    end
-	 tagged SliceData .step : 
+	 tagged SliceData .step :
 	    begin
 	       case ( step )
 		  0:
@@ -1453,7 +1455,7 @@ module mkEntropyDec( IEntropyDec );
 			tempreg <= zeroExtend(6'b111111);
 		     if(mbPartPredMode(sdmmbtype,0)==Intra_16x16 && maxNumCoeff==16)
 			nextstate = tagged ResidualBlock 1;
-		     else if(residualChroma==0 && (sdmcodedBlockPatternLuma & (1 << zeroExtend(temp5bit[3:2])))==0)
+		     else if(residualChroma==0 && (sdmcodedBlockPatternLuma & (1 << temp5bit[3:2]))==0)
 			begin
 			   calcnc.nNupdate_luma(truncate(temp5bit),0);
 			   outfifo_ITB.enq(tagged SDMRcoeffLevelZeros maxNumCoeff);
@@ -1515,20 +1517,20 @@ module mkEntropyDec( IEntropyDec );
 				 Bit#(4) levelSuffixSize = zeroExtend(suffixLength);
 				 Bit#(4) level_prefix = cavlc_level_prefix( buffer );
 				 Bit#(5) temp_level_prefix = zeroExtend(level_prefix);
-				 Bit#(28) tempbuffer = buffer[buffersize-1:buffersize-28] << zeroExtend(temp_level_prefix+1);
-				 Bit#(14) levelCode = zeroExtend(level_prefix) << zeroExtend(suffixLength);
+				 Bit#(28) tempbuffer = buffer[buffersize-1:buffersize-28] << (temp_level_prefix+1);
+				 Bit#(14) levelCode = zeroExtend(level_prefix) << suffixLength;
 				 if(level_prefix == 14 && suffixLength == 0)
 				    levelSuffixSize = 4;
 				 else if(level_prefix == 15)
 				    levelSuffixSize = 12;
-				 levelCode = levelCode + zeroExtend(tempbuffer[27:16] >> (12-zeroExtend(levelSuffixSize)));//level_suffix
+				 levelCode = levelCode + zeroExtend(tempbuffer[27:16] >> (12-levelSuffixSize));//level_suffix
 				 if(level_prefix == 15 && suffixLength == 0)
 				    levelCode = levelCode + 15;
 				 if(temp5bit2 == zeroExtend(temp3bit0) && temp3bit0 < 3)
 				    levelCode = levelCode + 2;
 				 if(suffixLength == 0)
 				    suffixLength = 1;
-				 if( suffixLength < 6 && ((levelCode+2) >> 1) > (3 << zeroExtend(suffixLength-1)) )
+				 if( suffixLength < 6 && ((levelCode+2) >> 1) > (3 << (suffixLength-1)) )
 				    suffixLength = suffixLength+1;
 				 if(levelCode[0] == 0)
 				    cavlcFIFO.enq(truncate((levelCode+2) >> 1));
@@ -1633,7 +1635,7 @@ module mkEntropyDec( IEntropyDec );
 				    temp5bit <= temp5bit+1;
 			      end
 			   else
-			      begin    
+			      begin
 				 if(temp5bit==7)
 				    begin
 				       temp5bit <= 0;
@@ -1653,25 +1655,25 @@ module mkEntropyDec( IEntropyDec );
 	       endcase
 	    end
       endcase
-      
+
       if(numbitsused+1 > bufcount)
 	 begin
 	    $display( "ERROR EntropyDec: not enough bits in buffer" );
 	    nextstate = Start;
 	 end
-      buffer <= buffer << zeroExtend(numbitsused);
+      buffer <= buffer << numbitsused;
       bufcount <= bufcount-numbitsused;
       state <= nextstate;
-      
+
    endrule
-   
-   
+
+
    interface Put ioin  = fifoToPut(infifo);
    interface Get ioout = fifoToGet(outfifo);
    interface Get ioout_InverseTrans = fifoToGet(outfifo_ITB);
 
-   interface mem_client = calcnc.mem_client; 
-      
+   interface mem_client = calcnc.mem_client;
+
 endmodule
 
 endpackage

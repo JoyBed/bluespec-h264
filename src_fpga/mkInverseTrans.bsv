@@ -44,7 +44,7 @@ import ClientServer::*;
 // Local Datatypes
 //-----------------------------------------------------------
 
-typedef union tagged                
+typedef union tagged
 {
  void     Start;            //not working on anything in particular
  void     Intra16x16DC;
@@ -55,9 +55,9 @@ typedef union tagged
 }
 State deriving(Eq,Bits);
 
-typedef union tagged                
+typedef union tagged
 {
-// void     Initializing;     //not working on anything in particular		  
+// void     Initializing;     //not working on anything in particular
  void     Passing;          //not working on anything in particular
  void     LoadingDC;
  void     Scaling;          //does not include scaling for DC (just loading in that case)
@@ -67,7 +67,7 @@ typedef union tagged
 }
 Process deriving(Eq,Bits);
 
-      
+
 //-----------------------------------------------------------
 // Helper functions
 
@@ -189,12 +189,12 @@ module mkInverseTrans( IInverseTrans );
    Reg#(Vector#(16,Bit#(16))) workVector       <- mkRegU();
    Reg#(Vector#(16,Bit#(16))) storeVector      <- mkRegU();
 
-   
+
 
    //-----------------------------------------------------------
    // Rules
 
-   
+
    rule passing (process matches Passing);
       //$display( "Trace Inverse Trans: passing infifo packed %h", pack(infifo.first()));
       case (infifo.first()) matches
@@ -233,7 +233,7 @@ module mkInverseTrans( IInverseTrans );
 	       else
 		  qpi = truncate(qpitemp-12);
 	       qpc <= qpi_to_qpc(qpi);
-	       outfifo.enq(IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
+	       outfifo.enq(tagged IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
 	    end
 	 tagged SDMmb_qp_delta .xdata :
 	    begin
@@ -247,7 +247,7 @@ module mkInverseTrans( IInverseTrans );
 	       else
 		  qpynext = truncate(qpytemp);
 	       qpy <= qpynext;
-	       
+
 	       //$display( "TRACE InverseTrans: qpy %0d", qpynext );
 	       //$display( "TRACE InverseTrans: qpy %0d", qpynext );
 	       Tuple2#(Bit#(4),Bit#(3)) temptuple = qpdivmod6(qpynext);
@@ -265,7 +265,7 @@ module mkInverseTrans( IInverseTrans );
 	       else
 		  qpi = truncate(qpitemp-12);
 	       qpc <= qpi_to_qpc(qpi);
-	       outfifo.enq(IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
+	       outfifo.enq(tagged IBTmb_qp {qpy:qpynext,qpc:qpi_to_qpc(qpi)});
 	    end
 	 tagged PPSchroma_qp_index_offset .xdata :
 	    begin
@@ -351,7 +351,7 @@ module mkInverseTrans( IInverseTrans );
       endcase
    endrule
 
-   
+
    rule scaling (process matches Scaling);
       Vector#(16,Bit#(16)) workVectorTemp = workVector;
       Vector#(16,Bit#(16)) storeVectorTemp = storeVector;
@@ -461,7 +461,7 @@ module mkInverseTrans( IInverseTrans );
 		  end
 	       Bit#(16) workValueTemp = zeroExtend(levelScaleValue)*signExtend(xdata);
 	       Bit#(16) workValue;
-	       workValue = workValueTemp << zeroExtend(qpdiv6);
+	       workValue = workValueTemp << qpdiv6;
 	       workVector <= update(workVectorTemp, reverseInverseZigZagScan(pixelNum), workValue);
 	       if(pixelNum==15 || (pixelNum==14 && (state==Chroma || state==Intra16x16)))
 		  begin
@@ -588,7 +588,7 @@ module mkInverseTrans( IInverseTrans );
 	 end
    endrule
 
-   
+
    rule scalingDC (process matches ScalingDC);
       Bit#(6)  qp;
       Bit#(4)  qpdiv6;
@@ -625,13 +625,13 @@ module mkInverseTrans( IInverseTrans );
       endcase
       storeValueTemp = zeroExtend(levelScaleValue)*signExtend(workValue);
       if(state==ChromaDC)
-	 storeValue = truncate( (storeValueTemp << zeroExtend(qpdiv6)) >> 1 );
+	 storeValue = truncate( (storeValueTemp << qpdiv6) >> 1 );
       else
 	 begin
 	    if(qp >= 36)
-	       storeValue = truncate( storeValueTemp << zeroExtend(qpdiv6 - 2) );
+	       storeValue = truncate( storeValueTemp << (qpdiv6 - 2) );
 	    else
-	       storeValue = truncate( ((storeValueTemp << 4) + zeroExtend(workOne << zeroExtend(5-qpdiv6))) >> zeroExtend(6 - qpdiv6) );
+	       storeValue = truncate( ((storeValueTemp << 4) + zeroExtend(workOne << (5-qpdiv6))) >> (6 - qpdiv6) );
 	 end
       storeVector <= update(storeVectorTemp, pixelNum, storeValue);
       if((state==ChromaDC && pixelNum==7) || pixelNum==15)
@@ -655,7 +655,7 @@ module mkInverseTrans( IInverseTrans );
    rule outputing (process matches Outputing);
       Vector#(4,Bit#(10)) outputVector = replicate(0);
       Vector#(16,Bit#(16)) workVectorTemp = workVector;
-      
+
       for(Integer ii=0; ii<4; ii=ii+1)
 	 outputVector[ii] = truncate((workVectorTemp[pixelNum+fromInteger(ii)]+32) >> 6);
       outfifo.enq( tagged ITBresidual outputVector);
@@ -698,14 +698,14 @@ module mkInverseTrans( IInverseTrans );
 		     process <= Scaling;
 	       end
 	 end
-   endrule 
+   endrule
 
-   
-   
+
+
    interface Put ioin  = fifoToPut(infifo);
    interface Get ioout = fifoToGet(outfifo);
 
-      
+
 endmodule
 
 endpackage
